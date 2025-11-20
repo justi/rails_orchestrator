@@ -30,23 +30,19 @@ bin/rails db:migrate
 
 **⚠️ Working code but NO validations!**
 
-## Step 2: Complete User Model (Add Validations)
+## Step 2: Add Validations to User Model
 
-**⚠️ REPLACE entire file `app/models/user.rb` (don't edit, replace):**
+**OPEN `app/models/user.rb` and ADD these lines after `normalizes`:**
 
 ```ruby
-class User < ApplicationRecord
-  has_secure_password  # BCrypt hashing
-  has_many :sessions, dependent: :destroy
-  normalizes :email_address, with: ->(e) { e.strip.downcase }
-
-  # Add these validations (not generated):
-  validates :email_address, presence: true, uniqueness: true
-  validates :password, length: { minimum: 12 },
-    format: { with: /\A(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/ },
-    allow_nil: true
-end
+# Generator doesn't create validations - ADD these:
+validates :email_address, presence: true, uniqueness: true
+validates :password, length: { minimum: 12 },
+  format: { with: /\A(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/ },
+  allow_nil: true
 ```
+
+**Result:** User model now has has_secure_password (from generator) + validations (you added).
 
 ## Step 3: Create User Registration (REQUIRED)
 
@@ -116,14 +112,20 @@ config.force_ssl = true  # Force HTTPS in production
 
 ## Step 5: OPTIONAL - Account Lockout
 
-**Not required. Only if needed.**
+**⚠️ SKIP this unless you specifically need account lockout. Steps 1-4 are complete auth.**
 
 ```bash
 rails g migration AddLockableToUsers failed_attempts:integer locked_at:datetime
 rails db:migrate
 ```
 
-Add to User: `def locked?; locked_at.present? && locked_at > 1.hour.ago; end`
+**ADD to User model (inside class, after validations):**
+
+```ruby
+def locked?
+  locked_at.present? && locked_at > 1.hour.ago
+end
+```
 
 ## Key Generated Methods (Available in Controllers)
 
@@ -146,15 +148,14 @@ User.find_by_password_reset_token(token) # Validates token, returns user
 2. Not running db:migrate after generator
 3. Using code snippets instead of complete class (Step 2)
 
-## 🐛 Errors (Only if Ignoring Guide)
+## 🐛 Errors (Only if Deviating from Guide)
 
-**Following Steps 1-4 = NO errors. These happen when improvising:**
-- Manual `password` column (need `password_digest`) ❌
-- Adding `attr_accessor :password` (duplicate) ❌
-- Forgetting `has_secure_password` ❌
-- Empty password_confirmation = `""` not `nil` ❌
+**Steps 1-4 prevent these errors. They happen when improvising:**
+- Creating `password` column manually (generator uses `password_digest`) ❌
+- Adding `attr_accessor :password` (has_secure_password provides it) ❌
+- Skipping `has_secure_password` (no authenticate method) ❌
 
-**ONE path. Don't improvise.**
+**Follow exact steps = zero errors. ONE path.**
 
 ## ⚠️ Password Security Anti-Patterns
 
