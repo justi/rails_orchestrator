@@ -34,17 +34,15 @@ Creates User/Session models, SessionsController, PasswordsController, Authentica
 
 ```ruby
 class User < ApplicationRecord
-  has_secure_password  # BCrypt hashing, creates password= and password_confirmation=
+  has_secure_password  # BCrypt hashing
   has_many :sessions, dependent: :destroy
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
-  # NOT generated - you must add these:
+  # Add these validations (not generated):
   validates :email_address, presence: true, uniqueness: true
-  validates :password,
-    length: { minimum: 12 },
-    format: { with: /\A(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-              message: "needs upper/lower/number" },
-    allow_nil: true  # Only validates on password change
+  validates :password, length: { minimum: 12 },
+    format: { with: /\A(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/ },
+    allow_nil: true
 end
 ```
 
@@ -54,14 +52,14 @@ end
 
 ```ruby
 class RegistrationsController < ApplicationController
-  allow_unauthenticated_access only: [:new, :create]  # From Authentication concern
+  allow_unauthenticated_access only: [:new, :create]
 
   def new; @user = User.new; end
 
   def create
     @user = User.new(user_params)
     if @user.save
-      start_new_session_for @user  # From Authentication concern - creates session + cookie
+      start_new_session_for @user  # Creates session + cookie
       redirect_to root_path, notice: "Welcome!"
     else
       render :new, status: :unprocessable_entity
@@ -129,12 +127,6 @@ def locked?
 end
 ```
 
-## What's NOT Generated (Must Add Manually)
-
-1. Registration controller + view + route
-2. Email uniqueness + password complexity validations
-3. Session expiration configuration
-
 ## Key Generated Methods (Available in Controllers)
 
 ```ruby
@@ -146,17 +138,26 @@ User.find_by_password_reset_token(token) # Validates token, returns user
 
 ## Production Checklist
 
-- [ ] User model has email uniqueness + password complexity validations
-- [ ] RegistrationsController created with route
-- [ ] Session store configured with expiration + security flags
-- [ ] Force SSL enabled in production.rb
-- [ ] CSRF protection NOT disabled (enabled by default)
+- [ ] Email uniqueness + password validations in User model
+- [ ] RegistrationsController + route + view created
+- [ ] Session expiration + security flags configured
+- [ ] Force SSL enabled, CSRF protection kept
 
 ## Common Mistakes
 
 1. **Forgetting to add validations** - User model has NO validations by default
 2. **Not running db:migrate** - After generate commands, always migrate
 3. **Incomplete User model** - Don't use code snippets, use the complete class above
+
+## ⚠️ Password Security Anti-Patterns
+
+**DON'T use for passwords** (common agent mistake: "encrypt password" → wrong tool):
+- `attr_encrypted` - Reversible encryption ❌ Passwords need one-way HASHING
+- `ActiveRecord::Encryption` - For other data (SSN/cards), NOT passwords ❌
+- `Digest::SHA256.hexdigest` - Unsalted, rainbow table vulnerable ❌
+
+**ONLY use:** `has_secure_password` (BCrypt hashing) ✅
+**Rule:** Hash (irreversible) ≠ Encrypt (reversible)
 
 ---
 
