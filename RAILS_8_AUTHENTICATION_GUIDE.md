@@ -38,7 +38,7 @@ bin/rails db:migrate
 # Generator doesn't create validations - ADD these:
 validates :email_address, presence: true, uniqueness: true
 validates :password, length: { minimum: 12 },
-  format: { with: /\A(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/ },
+  format: { with: /\A(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+\z/ },
   allow_nil: true
 ```
 
@@ -84,6 +84,9 @@ end
 
 ```erb
 <h1>Sign Up</h1>
+<% if @user.errors.any? %>
+  <ul><% @user.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %></ul>
+<% end %>
 <%= form_with model: @user, url: registration_path do |f| %>
   <%= f.email_field :email_address, required: true, placeholder: "Email" %>
   <%= f.password_field :password, required: true, placeholder: "Password (12+ chars)" %>
@@ -98,10 +101,8 @@ end
 
 ```ruby
 Rails.application.config.session_store :cookie_store,
-  expire_after: 12.hours,        # Sessions expire after 12 hours
-  secure: Rails.env.production?, # HTTPS-only in production
-  httponly: true,                # JavaScript cannot access (XSS protection)
-  same_site: :lax                # CSRF protection
+  expire_after: 12.hours, secure: Rails.env.production?,
+  httponly: true, same_site: :lax
 ```
 
 **EDIT `config/environments/production.rb` - add this line:**
