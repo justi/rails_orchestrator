@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/justi-rails-orchestrator-badge.png)](https://mseep.ai/app/justi-rails-orchestrator)
+
 # Rails Orchestrator
 
 Rails Orchestrator is an autonomous system for planning and executing programming tasks based on Ruby on Rails 8+. It serves as a secure server for the Model Context Protocol (MCP), enabling integration of AI tools with software development processes.
